@@ -2,11 +2,11 @@
 
 <h1>Home</h1>
 <p><%= startingContent %></p>
-<% posts.forEach(function(item){ %>
-    <h1><%= item.postTitle %></h1>    
+<% posts.forEach(function(post){ %>
+    <h1><%= post.title %></h1>    
     <p>
-        <%= item.postTruncate %> 
-        <a href="/posts/<%= item.postTitle %>">Read More</a>
+        <%= _.truncate(post.body, {"length": 300, "omission": "..."}) %> 
+        <a href="/posts/<%= post.id %>">Read More</a>
     </p>
 <% }); %>
 

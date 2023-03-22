@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const _ = require("lodash");
 const ejs = require("ejs");
+const mongoose = require("mongoose");
 
 const homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
 const aboutContent = "Hac habitasse platea dictumst vestibulum rhoncus est pellentesque. Dictumst vestibulum rhoncus est pellentesque elit ullamcorper. Non diam phasellus vestibulum lorem sed. Platea dictumst quisque sagittis purus sit. Egestas sed sed risus pretium quam vulputate dignissim suspendisse. Mauris in aliquam sem fringilla. Semper risus in hendrerit gravida rutrum quisque non tellus orci. Amet massa vitae tortor condimentum lacinia quis vel eros. Enim ut tellus elementum sagittis vitae. Mauris ultrices eros in cursus turpis massa tincidunt dui.";
@@ -11,49 +12,78 @@ const contactContent = "Scelerisque eleifend donec pretium vulputate sapien. Rho
 
 const app = express();
 
-let posts = [];
+//let posts = [];
 
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-app.get("/", function(req, res){
-  res.render("home", {startingContent: homeStartingContent, posts: posts});
-});
+app.locals._ = _;
 
-app.get("/about", function(req, res){
-  res.render("about", {aboutContent: aboutContent});
-});
+main().catch(err => console.log(err));
 
-app.get("/contact", function(req, res){
-  res.render("contact", {contactContent: contactContent});
-});
-
-app.get("/compose", function(req, res){
-  res.render("compose");
-});
-
-app.post("/compose", function(req, res){
-  const post = {
-    postTitle: req.body.postTitle,
-    postBody: req.body.postBody,
-    postTruncate: _.truncate(req.body.postBody, {"length": 300, "omission": "..."})
-  };
-  posts.push(post);
-  res.redirect("/");
-});
-
-app.get("/posts/:postName", function(req,res){
-  const requestedTitle = _.lowerCase(req.params.postName);
-  posts.forEach(function(item) {
-    const storedTitle = _.lowerCase(item.postTitle);
-    const storedContent = item.postBody;
-    if(storedTitle === requestedTitle) {
-      res.render("post", {postTitle: item.postTitle, postBody: storedContent});
-    }
+async function main() {
+  await mongoose.connect("mongodb+srv://fx:3373380mongodb@cluster0.ewlt8jq.mongodb.net/blogPostsDB?retryWrites=true&w=majority");
+  const postsSchema = new mongoose.Schema({
+    title: String,
+    body: String
   });
-});
+  const Post = mongoose.model("Post", postsSchema);
+
+  app.get("/", async function(req, res){
+    const currentPosts = await Post.find();
+    res.render("home", {startingContent: homeStartingContent, posts: currentPosts});
+  });
+  
+  app.get("/about", function(req, res){
+    res.render("about", {aboutContent: aboutContent});
+  });
+  
+  app.get("/contact", function(req, res){
+    res.render("contact", {contactContent: contactContent});
+  });
+  
+  app.get("/compose", function(req, res){
+    res.render("compose");
+  });
+  
+  app.post("/compose", function(req, res){
+    const newPost = new Post({
+      title: req.body.postTitle,
+      body: req.body.postBody
+    });
+    newPost.save();
+    // const post = {
+    //   postTitle: req.body.postTitle,
+    //   postBody: req.body.postBody,
+    //   postTruncate: _.truncate(req.body.postBody, {"length": 300, "omission": "..."})
+    // };
+    //posts.push(post);
+    res.redirect("/");
+  });
+  
+  app.get("/posts/:postID", async function(req,res){
+    const requestedID = req.params.postID;
+    const foundPost = await Post.findOne({_id: requestedID});
+    if(foundPost) {
+      res.render("post", {postTitle: foundPost.title, postBody: foundPost.body});
+    } else {
+      res.send("Not Found");
+    }
+    // posts.forEach(function(item) {
+    //   const storedTitle = _.lowerCase(item.postTitle);
+    //   const storedContent = item.postBody;
+    //   if(storedTitle === requestedTitle) {
+    //     res.render("post", {postTitle: item.postTitle, postBody: storedContent});
+    //   }
+    // });
+  });
+  
+  
+
+
+}
 
 
 
