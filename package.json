@@ -4,14 +4,17 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@vercel/node": "^2.9.13",
     "body-parser": "^1.18.3",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "vercel": "^28.17.0"
   }
 }
